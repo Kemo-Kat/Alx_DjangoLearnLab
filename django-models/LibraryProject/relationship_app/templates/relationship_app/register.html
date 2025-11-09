@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; }
+        .auth-container { max-width: 400px; margin: 50px auto; }
+        .form-group { margin-bottom: 15px; }
+        .helptext { font-size: 0.9em; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1 class="text-center">Register</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <input type="{{ field.field.widget.input_type }}" 
+                           name="{{ field.name }}" 
+                           class="form-control {% if field.errors %}is-invalid{% endif %}" 
+                           id="{{ field.id_for_label }}"
+                           {% if field.field.required %}required{% endif %}>
+                    
+                    {% if field.help_text %}
+                        <small class="form-text text-muted helptext">{{ field.help_text }}</small>
+                    {% endif %}
+                    
+                    {% if field.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in field.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-success w-100">Register</button>
+        </form>
+        
+        <div class="text-center mt-3">
+            <a href="{% url 'login' %}">Already have an account? Login here</a>
+        </div>
+    </div>
+</body>
+</html>
