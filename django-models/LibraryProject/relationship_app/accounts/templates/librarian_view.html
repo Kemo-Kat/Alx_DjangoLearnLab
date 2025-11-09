@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Librarian Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { background: #007bff; color: white; padding: 20px; border-radius: 5px; }
+        .content { background: #f8f9fa; padding: 20px; margin-top: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Librarian Dashboard</h1>
+            <p>Welcome, {{ user.username }} ({{ user.userprofile.role }})</p>
+        </div>
+        <div class="content">
+            <h2>Library Management</h2>
+            <ul>
+                <li>Book Catalog Management</li>
+                <li>Check-in/Check-out Books</li>
+                <li>Member Management</li>
+                <li>Inventory Tracking</li>
+                <li>Late Fee Management</li>
+            </ul>
+            <a href="/">Home</a>
+        </div>
+    </div>
+</body>
+</html>
