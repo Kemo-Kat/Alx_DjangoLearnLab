@@ -1,11 +1,38 @@
 # relationship_app/views.py
 from django.shortcuts import render, redirect
-from django.contrib.auth import login
 from django.views.generic import ListView, DetailView
 from .models import Book, Library
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
+
+#Admin view
+def is_admin(user):
+    return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.role == 'Admin'
+
+def is_librarian(user):
+    return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.role == 'Librarian'
+
+def is_member(user):
+    return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.role == 'Member'
+
+@login_required
+@user_passes_test(is_admin)
+def admin_view(request):
+    return render(request, 'accounts/admin_view.html')
+
+@login_required
+@user_passes_test(is_librarian)
+def librarian_view(request):
+    return render(request, 'accounts/librarian_view.html')
+
+@login_required
+@user_passes_test(is_member)
+def member_view(request):
+    return render(request, 'accounts/member_view.html')
 
 # Function-based view to list all books
 def list_books(request):
@@ -38,4 +65,3 @@ def register(request):
 @login_required
 def profile(request):
     return render(request, 'relationship_app/profile.html')
-
