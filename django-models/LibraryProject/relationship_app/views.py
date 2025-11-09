@@ -1,15 +1,18 @@
-# relationship_app/views.py (temporary alternative)
+# relationship_app/views.py
 from django.shortcuts import render
-from django.views.generic import ListView
-from .models import Book
+from django.views.generic import DetailView
+from .models import Book, Library  # Add Library to import
 
-# Function-based view
+# Function-based view to list all books
 def list_books(request):
     books = Book.objects.all().select_related('author')
     return render(request, 'relationship_app/list_books.html', {'books': books})
 
-# Alternative class-based view using Book model
-class BookListView(ListView):
-    model = Book
-    template_name = 'relationship_app/book_list.html'
-    context_object_name = 'books'
+# Class-based view to display library details
+class LibraryDetailView(DetailView):
+    model = Library  # This requires the Library import
+    template_name = 'relationship_app/library_detail.html'  # Add the template name
+    context_object_name = 'library'  # Add context object name
+    
+    def get_queryset(self):
+        return Library.objects.prefetch_related('books__author')
