@@ -1,7 +1,7 @@
 # relationship_app/views.py
 from django.shortcuts import render
 from django.views.generic import DetailView
-from .models import Book, Library  # Add Library to import
+from .models import Library, Book  # Add Library to import
 
 # Function-based view to list all books
 def list_books(request):
@@ -16,3 +16,4 @@ class LibraryDetailView(DetailView):
     
     def get_queryset(self):
         return Library.objects.prefetch_related('books__author')
+
