@@ -1,5 +1,6 @@
 # relationship_app/views.py
 from django.shortcuts import render, redirect
+from django.contrib.auth import login
 from django.views.generic import ListView, DetailView
 from .models import Book, Library
 from django.contrib.auth.forms import UserCreationForm
@@ -37,3 +38,4 @@ def register(request):
 @login_required
 def profile(request):
     return render(request, 'relationship_app/profile.html')
+
