@@ -2,6 +2,37 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
+from django.db import models
+from django.conf import settings
+
+class Book(models.Model):
+    title = models.CharField(max_length=200)
+    author = models.CharField(max_length=100)
+    isbn = models.CharField(max_length=13, unique=True)
+    publication_date = models.DateField()
+    description = models.TextField(blank=True)
+    
+    # Using CustomUser instead of default User
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='books_created'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        # Custom permissions with the required names
+        permissions = [
+            ("can_create", "Can create book"),
+            ("can_delete", "Can delete book"),
+        ]
+        ordering = ['-created_at']
+
+
 
 class CustomUserManager(BaseUserManager):
     """
@@ -87,6 +118,7 @@ class Book(models.Model):
     
     class Meta:
         ordering = ['title']
+
 
 
 
