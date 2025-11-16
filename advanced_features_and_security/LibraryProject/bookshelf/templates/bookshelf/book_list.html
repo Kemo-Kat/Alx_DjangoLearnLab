@@ -1,0 +1,390 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book List - Secure Library</title>
+    
+    <!-- Bootstrap CSS for better styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        .book-card {
+            transition: transform 0.2s ease-in-out;
+            margin-bottom: 1.5rem;
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .search-form {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            margin-bottom: 2rem;
+        }
+        .pagination {
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        .security-badge {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'book_list' %}">
+                <i class="bi bi-book"></i> Secure Library
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'book_list' %}">All Books</a>
+                <a class="nav-link" href="{% url 'book_create' %}">Add Book</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-6">Book Collection</h1>
+                <p class="text-muted">Browse our secure collection of books</p>
+                <span class="badge bg-success security-badge">
+                    <i class="bi bi-shield-check"></i> Secure Session
+                </span>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'book_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add New Book
+                </a>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="search-form">
+            <h5 class="mb-3">Search Books</h5>
+            
+            <!-- CSRF Token is automatically included in POST forms -->
+            <form method="get" action="{% url 'book_list' %}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search_query" class="form-label">Search</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="search_query" 
+                           name="q" 
+                           value="{{ request.GET.q|default:'' }}" 
+                           placeholder="Search by title, author, or description..."
+                           maxlength="100">
+                    <div class="form-text">Search is secured against SQL injection</div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="genre" class="form-label">Genre</label>
+                    <select class="form-select" id="genre" name="genre">
+                        <option value="">All Genres</option>
+                        <option value="fiction" {% if request.GET.genre == 'fiction' %}selected{% endif %}>Fiction</option>
+                        <option value="non-fiction" {% if request.GET.genre == 'non-fiction' %}selected{% endif %}>Non-Fiction</option>
+                        <option value="science" {% if request.GET.genre == 'science' %}selected{% endif %}>Science</option>
+                        <option value="technology" {% if request.GET.genre == 'technology' %}selected{% endif %}>Technology</option>
+                        <option value="biography" {% if request.GET.genre == 'biography' %}selected{% endif %}>Biography</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="sort" class="form-label">Sort By</label>
+                    <select class="form-select" id="sort" name="sort">
+                        <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>Title A-Z</option>
+                        <option value="-title" {% if request.GET.sort == '-title' %}selected{% endif %}>Title Z-A</option>
+                        <option value="author" {% if request.GET.sort == 'author' %}selected{% endif %}>Author A-Z</option>
+                        <option value="-publication_date" {% if request.GET.sort == '-publication_date' %}selected{% endif %}>Newest First</option>
+                        <option value="publication_date" {% if request.GET.sort == 'publication_date' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+                
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <a href="{% url 'book_list' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Security Alert -->
+        {% if messages %}
+        <div class="messages mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Books Grid -->
+        {% if page_obj %}
+        <div class="row">
+            {% for book in page_obj %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card book-card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title mb-0">{{ book.title|escape }}</h5>
+                            <span class="badge bg-info">{{ book.genre|default:"Unknown"|escape }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Author:</strong> {{ book.author|escape }}<br>
+                            {% if book.publication_date %}
+                            <strong>Published:</strong> {{ book.publication_date|date:"F Y" }}<br>
+                            {% endif %}
+                            {% if book.isbn %}
+                            <strong>ISBN:</strong> <code>{{ book.isbn|escape }}</code><br>
+                            {% endif %}
+                        </p>
+                        
+                        {% if book.description %}
+                        <p class="card-text">
+                            <strong>Description:</strong><br>
+                            {{ book.description|truncatewords:30|escape }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Added: {{ book.created_at|date:"M d, Y" }}
+                            </small>
+                            
+                            <!-- Action Buttons -->
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'book_detail' book.id %}" 
+                                   class="btn btn-sm btn-outline-primary">View</a>
+                                
+                                <!-- CSRF-protected delete form -->
+                                <form method="post" 
+                                      action="{% url 'book_delete' book.id %}" 
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to delete {{ book.title|escapejs }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Book pagination" class="mt-4">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div class="text-center text-muted mt-2">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            (Total: {{ page_obj.paginator.count }} books)
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="bi bi-book" style="font-size: 4rem; color: #dee2e6;"></i>
+            <h3 class="mt-3">No Books Found</h3>
+            <p class="lead">
+                {% if request.GET.q %}
+                No books match your search criteria "{{ request.GET.q|escape }}".
+                {% else %}
+                No books available in the library yet.
+                {% endif %}
+            </p>
+            <a href="{% url 'book_create' %}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle"></i> Add the First Book
+            </a>
+            {% if request.GET.q %}
+            <a href="{% url 'book_list' %}" class="btn btn-outline-secondary mt-2">
+                View All Books
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Security Features Notice -->
+        <div class="card mt-5 border-success">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-shield-check"></i> Security Features Active
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success"></i> CSRF Protection</li>
+                            <li><i class="bi bi-check-circle text-success"></i> XSS Prevention</li>
+                            <li><i class="bi bi-check-circle text-success"></i> SQL Injection Protection</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success"></i> Input Validation</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Output Escaping</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Secure Pagination</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Secure Library System</h6>
+                    <p class="mb-0">Built with Django security best practices</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small>
+                        &copy; 2024 Secure Library. 
+                        <span class="text-muted">All rights reserved.</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Custom JavaScript for enhanced security features -->
+    <script>
+        // CSRF token setup for AJAX requests
+        function getCSRFToken() {
+            const name = 'csrftoken';
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Secure AJAX request helper
+        function makeSecureRequest(url, data, method = 'POST') {
+            return fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            });
+        }
+
+        // Enhanced delete confirmation
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteForms = document.querySelectorAll('form[onsubmit*="confirm"]');
+            
+            deleteForms.forEach(form => {
+                const originalOnSubmit = form.onsubmit;
+                
+                form.onsubmit = function(e) {
+                    e.preventDefault();
+                    
+                    const bookTitle = form.closest('.card').querySelector('.card-title').textContent.trim();
+                    const confirmed = confirm(`Are you sure you want to delete "${bookTitle}"? This action cannot be undone.`);
+                    
+                    if (confirmed) {
+                        form.submit();
+                    }
+                };
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+
+        // Input sanitization for search
+        function sanitizeInput(input) {
+            return input.replace(/[<>&'"]/g, '');
+        }
+
+        // Secure search input handling
+        const searchInput = document.getElementById('search_query');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                // Basic client-side sanitization (server-side is primary)
+                this.value = sanitizeInput(this.value);
+            });
+        }
+    </script>
+</body>
+</html>
