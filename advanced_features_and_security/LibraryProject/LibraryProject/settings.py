@@ -143,3 +143,40 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 # File upload security
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+
+
+# =============================================================================
+# HTTPS AND SECURITY CONFIGURATION
+# =============================================================================
+
+# SECURE_SSL_REDIRECT: Redirect all HTTP requests to HTTPS
+SECURE_SSL_REDIRECT = True
+
+# SECURE_HSTS_SECONDS: HTTP Strict Transport Security
+SECURE_HSTS_SECONDS = 31536000  # 1 year in seconds
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# SECURE_PROXY_SSL_HEADER: Required when using a reverse proxy (Nginx/Apache)
+# This tells Django that the connection is HTTPS even though the proxy
+# is handling the SSL termination
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# =============================================================================
+# SECURE COOKIE CONFIGURATION
+# =============================================================================
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # Set to True if not using AJAX with CSRF
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# =============================================================================
+# SECURE HEADERS CONFIGURATION
+# =============================================================================
+
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
