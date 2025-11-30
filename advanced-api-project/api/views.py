@@ -35,7 +35,7 @@ class BookListView(generics.ListAPIView):
         GET /api/books/?title_icontains=potter&author_name=Rowling
         GET /api/books/?ordering=title,-publication_year
     """
-    
+    filters.OrderingFilter
     queryset = Book.objects.all().select_related('author')
     serializer_class = BookSerializer
     permission_classes = [permissions.AllowAny]
