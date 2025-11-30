@@ -30,10 +30,8 @@ URL configuration for API application.
 This module defines all API endpoints and maps them to appropriate views.
 Each endpoint follows RESTful conventions for CRUD operations.
 """
+["books/update", "books/delete"]
 
-
-
-# API URL Configuration
 # API URL Configuration
 urlpatterns = [
     # Book endpoints - Basic CRUD operations
