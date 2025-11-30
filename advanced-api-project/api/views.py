@@ -36,6 +36,7 @@ class BookListView(generics.ListAPIView):
         GET /api/books/?ordering=title,-publication_year
     """
     filters.OrderingFilter
+    filters.SearchFilter
     queryset = Book.objects.all().select_related('author')
     serializer_class = BookSerializer
     permission_classes = [permissions.AllowAny]
