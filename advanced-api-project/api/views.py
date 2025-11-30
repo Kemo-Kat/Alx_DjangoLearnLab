@@ -232,3 +232,97 @@ class AuthorDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ['GET']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
+
+class CustomBookCreateView(generics.CreateAPIView):
+    """
+    Custom create view with enhanced validation and response handling.
+    
+    This view demonstrates customizing the default CreateAPIView behavior
+    with additional validation, response formatting, and error handling.
+    """
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Custom create method with enhanced response handling.
+        
+        Overrides the default create method to:
+        - Add custom headers
+        - Modify response format
+        - Implement additional validation
+        """
+        serializer = self.get_serializer(data=request.data)
+        
+        # Custom validation before default validation
+        publication_year = request.data.get('publication_year')
+        if publication_year and int(publication_year) < 1000:
+            return Response(
+                {"error": "Publication year seems invalid."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Proceed with default validation and creation
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Custom success response
+        headers = self.get_success_headers(serializer.data)
+        response_data = {
+            "message": "Book created successfully",
+            "data": serializer.data,
+            "status": "success"
+        }
+        
+        return Response(
+            response_data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+
+class CustomBookUpdateView(generics.UpdateAPIView):
+    """
+    Custom update view with enhanced validation and response handling.
+    
+    This view demonstrates customizing the default UpdateAPIView behavior
+    with additional business logic and response formatting.
+    """
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'
+    
+    def update(self, request, *args, **kwargs):
+        """
+        Custom update method with enhanced response handling.
+        
+        Overrides the default update method to:
+        - Track changes
+        - Provide detailed response messages
+        - Implement partial update restrictions
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        
+        # Track original values for auditing
+        original_title = instance.title
+        original_year = instance.publication_year
+        
+        self.perform_update(serializer)
+        
+        # Custom success response with change information
+        response_data = {
+            "message": "Book updated successfully",
+            "data": serializer.data,
+            "changes": {
+                "title_changed": original_title != instance.title,
+                "year_changed": original_year != instance.publication_year
+            },
+            "status": "success"
+        }
+        
+        return Response(response_data)
