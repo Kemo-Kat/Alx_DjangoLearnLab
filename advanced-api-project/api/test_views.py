@@ -24,7 +24,7 @@ class BaseAPITestCase(APITestCase):
     """
     Base test case with common setup and utility methods.
     """
-    
+   self.client.login 
     def setUp(self):
         """Set up test data and client for all test cases."""
         self.client = APIClient()
