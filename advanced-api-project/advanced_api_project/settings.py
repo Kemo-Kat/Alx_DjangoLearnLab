@@ -112,3 +112,57 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
 }
+
+"""
+Test factories for creating model instances in tests.
+
+This module provides factory classes to easily create test data
+for Author and Book models without duplicating creation logic.
+"""
+
+from django.contrib.auth.models import User
+from factory import DjangoModelFactory, Faker, SubFactory, post_generation
+from factory.fuzzy import FuzzyInteger
+from ..models import Author, Book
+import factory
+
+
+class UserFactory(DjangoModelFactory):
+    """
+    Factory for creating User instances for authentication testing.
+    """
+    class Meta:
+        model = User
+
+    username = Faker('user_name')
+    email = Faker('email')
+    password = factory.PostGenerationMethodCall('set_password', 'testpassword123')
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        """Override to use create_user method for proper password hashing."""
+        manager = cls._get_manager(model_class)
+        return manager.create_user(*args, **kwargs)
+
+
+class AuthorFactory(DjangoModelFactory):
+    """
+    Factory for creating Author instances with realistic test data.
+    """
+    class Meta:
+        model = Author
+
+    name = Faker('name')
+
+
+class BookFactory(DjangoModelFactory):
+    """
+    Factory for creating Book instances with realistic test data.
+    """
+    class Meta:
+        model = Book
+
+    title = Faker('sentence', nb_words=4)
+    publication_year = FuzzyInteger(1900, 2023)
+    author = SubFactory(AuthorFactory)
+    
