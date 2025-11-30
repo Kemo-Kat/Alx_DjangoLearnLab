@@ -34,19 +34,23 @@ Each endpoint follows RESTful conventions for CRUD operations.
 
 
 # API URL Configuration
+# API URL Configuration
 urlpatterns = [
-    # Book endpoints
+    # Book endpoints - Basic CRUD operations
     path('books/', views.BookListView.as_view(), name='book-list'),
     path('books/<int:pk>/', views.BookDetailView.as_view(), name='book-detail'),
     path('books/create/', views.BookCreateView.as_view(), name='book-create'),
     path('books/<int:pk>/update/', views.BookUpdateView.as_view(), name='book-update'),
     path('books/<int:pk>/delete/', views.BookDeleteView.as_view(), name='book-delete'),
     
+    # Book endpoints - Custom views (enhanced functionality)
+    path('books/custom/create/', views.CustomBookCreateView.as_view(), name='book-custom-create'),
+    path('books/<int:pk>/custom/update/', views.CustomBookUpdateView.as_view(), name='book-custom-update'),
+    
     # Author endpoints
     path('authors/', views.AuthorListView.as_view(), name='author-list'),
     path('authors/<int:pk>/', views.AuthorDetailView.as_view(), name='author-detail'),
 ]
-
 """
 URL Patterns Explanation:
 
