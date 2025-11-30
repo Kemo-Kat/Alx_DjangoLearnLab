@@ -10,6 +10,175 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from .permissions import IsAuthenticatedOrReadOnly, IsAdminOrReadOnly
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from .filters import BookFilter, AuthorFilter
+
+
+class BookListView(generics.ListAPIView):
+    """
+    Enhanced List view for retrieving books with advanced filtering, searching, and ordering.
+    
+    This view provides comprehensive query capabilities:
+    - Filtering: Filter by publication year, author, title, and custom ranges
+    - Searching: Text search across title and author names
+    - Ordering: Sort by any field with ascending or descending order
+    
+    Filter Backends:
+        DjangoFilterBackend: For field-based filtering using BookFilter
+        SearchFilter: For text-based searching across multiple fields
+        OrderingFilter: For sorting results by specified fields
+    
+    Example Usage:
+        GET /api/books/?publication_year=2020
+        GET /api/books/?search=harry&ordering=-publication_year
+        GET /api/books/?publication_year_min=2010&publication_year_max=2020
+        GET /api/books/?title_icontains=potter&author_name=Rowling
+        GET /api/books/?ordering=title,-publication_year
+    """
+    
+    queryset = Book.objects.all().select_related('author')
+    serializer_class = BookSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    # Filter configuration
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = BookFilter  # Use our custom filter class
+    
+    # Search configuration - define which fields are searchable
+    search_fields = [
+        'title',           # Exact title matching
+        'author__name',    # Author name matching
+        '^title',          # Title starts with search term
+    ]
+    
+    # Ordering configuration - define which fields can be used for ordering
+    ordering_fields = [
+        'title',
+        'publication_year', 
+        'created_at', 
+        'updated_at',
+        'author__name',    # Order by author name
+    ]
+    
+    # Default ordering when no ordering specified
+    ordering = ['title']
+    
+    def get_queryset(self):
+        """
+        Enhance the base queryset with additional optimizations.
+        
+        Returns:
+            Optimized queryset with select_related and prefetch_related
+        """
+        queryset = super().get_queryset()
+        return queryset.select_related('author')
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Custom list method to provide enhanced response with query metadata.
+        
+        Overrides the default list method to include information about
+        applied filters, search, and ordering in the response.
+        """
+        response = super().list(request, *args, **kwargs)
+        
+        # Add query metadata to the response
+        query_params = request.query_params
+        applied_filters = {}
+        
+        # Capture applied filters
+        for param, value in query_params.items():
+            if param in ['search', 'ordering']:
+                applied_filters[param] = value
+            elif param in BookFilter.get_filters():
+                applied_filters[param] = value
+        
+        # Add metadata to response
+        response.data['query_metadata'] = {
+            'total_results': len(response.data['results']) if 'results' in response.data else len(response.data),
+            'applied_filters': applied_filters,
+            'available_filters': {
+                'search_fields': self.search_fields,
+                'ordering_fields': self.ordering_fields,
+                'filter_fields': list(BookFilter.get_filters().keys()),
+            }
+        }
+        
+        return response
+
+
+class BookDetailView(generics.RetrieveAPIView):
+    """
+    Detail view for retrieving a single book by ID.
+    Maintains basic functionality without filtering capabilities.
+    """
+    queryset = Book.objects.all().select_related('author')
+    serializer_class = BookSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'pk'
+
+
+class AuthorListView(generics.ListCreateAPIView):
+    """
+    Enhanced Author list view with filtering and search capabilities.
+    
+    Provides:
+    - Filtering by name and book count
+    - Search across author names
+    - Ordering by various fields
+    
+    Example Usage:
+        GET /api/authors/?name_icontains=rowling
+        GET /api/authors/?min_books=5
+        GET /api/authors/?search=J.K.&ordering=name
+    """
+    
+    queryset = Author.objects.all().prefetch_related('books')
+    permission_classes = [permissions.AllowAny]
+    
+    # Filter configuration for authors
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = AuthorFilter
+    search_fields = ['name', '^name']  # Search by name
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    ordering = ['name']  # Default ordering by name
+    
+    def get_serializer_class(self):
+        """Use different serializers for different actions."""
+        if self.request.method == 'POST':
+            return AuthorCreateSerializer
+        return AuthorSerializer
+    
+    def get_permissions(self):
+        """Apply different permissions based on HTTP method."""
+        if self.request.method == 'POST':
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+
+# Keep all other existing views (BookCreateView, BookUpdateView, etc.)
+# They remain unchanged as filtering primarily applies to list views
+
+class BookCreateView(generics.CreateAPIView):
+    """Create view for books (unchanged from previous implementation)."""
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class BookUpdateView(generics.UpdateAPIView):
+    """Update view for books (unchanged from previous implementation)."""
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'pk'
+
+
+class BookDeleteView(generics.DestroyAPIView):
+    """Delete view for books (unchanged from previous implementation)."""
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'pk'
 
 class BookList(generics.ListAPIView):
     queryset = Book.objects.all()
