@@ -11,6 +11,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from .permissions import IsAuthenticatedOrReadOnly, IsAdminOrReadOnly
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from .filters import BookFilter, AuthorFilter
+from django_filters import rest_framework
 
 
 class BookListView(generics.ListAPIView):
