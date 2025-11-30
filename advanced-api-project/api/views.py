@@ -8,7 +8,7 @@ from .serializers import AuthorSerializer, BookSerializer, AuthorCreateSerialize
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-
+from .permissions import IsAuthenticatedOrReadOnly, IsAdminOrReadOnly
 
 class BookList(generics.ListAPIView):
     queryset = Book.objects.all()
@@ -326,7 +326,7 @@ class CustomBookUpdateView(generics.UpdateAPIView):
         }
         
         return Response(response_data)
-from .permissions import IsAuthenticatedOrReadOnly, IsAdminOrReadOnly
+
 
 # Update BookCreateView to use custom permissions
 class BookCreateView(generics.CreateAPIView):
