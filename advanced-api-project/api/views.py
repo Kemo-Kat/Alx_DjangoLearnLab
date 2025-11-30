@@ -326,3 +326,12 @@ class CustomBookUpdateView(generics.UpdateAPIView):
         }
         
         return Response(response_data)
+from .permissions import IsAuthenticatedOrReadOnly, IsAdminOrReadOnly
+
+# Update BookCreateView to use custom permissions
+class BookCreateView(generics.CreateAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Updated to custom permission
+    
+    # ... rest of the code remains the same
