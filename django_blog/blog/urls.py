@@ -63,6 +63,7 @@ urlpatterns = [
     path('comment/<int:pk>/edit/', views.edit_comment, name='edit_comment'),
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
 
+
     # Comment URLs using class-based views
     path('post/<int:post_id>/comment/new/', 
          views.CommentCreateView.as_view(), 
@@ -148,6 +149,7 @@ urlpatterns = [
              template_name='blog/password_reset_complete.html'
          ), 
          name='password_reset_complete'),
+         (PostByTagListView.as_view())
 ]
 
 # Serve media files in development
@@ -156,5 +158,6 @@ if settings.DEBUG:
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+
 
 
