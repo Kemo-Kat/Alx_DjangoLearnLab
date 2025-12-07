@@ -67,6 +67,9 @@ urlpatterns = [
     path('post/<int:post_id>/comment/new/', 
          views.CommentCreateView.as_view(), 
          name='comment_create'),
+    path('comment/<int:pk>/update/', 
+        views= post/<int:pk>/comments/new/()
+         name= 'comment_update')
     path('comment/<int:pk>/edit/', 
          views.CommentUpdateView.as_view(), 
          name='comment_edit'),
@@ -153,4 +156,5 @@ if settings.DEBUG:
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+
 
