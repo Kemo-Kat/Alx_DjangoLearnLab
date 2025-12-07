@@ -93,18 +93,31 @@ class PostForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter tags separated by commas (e.g., django, python, web)'
+            'placeholder': 'Enter tags separated by commas (e.g., django, python, web)',
+            'id': 'tags-input'
         }),
-        help_text="Separate tags with commas"
+        help_text="Separate tags with commas. Maximum 10 tags."
     )
     
     class Meta:
         model = Post
-        fields = ['title', 'content', 'image', 'status']  # Add other fields as needed
+        fields = ['title', 'content', 'image', 'status']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter post title'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
-            # ... other widgets
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter post title'
+            }),
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 10,
+                'placeholder': 'Write your post content here...'
+            }),
+            'image': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
         }
     
     def __init__(self, *args, **kwargs):
@@ -115,19 +128,44 @@ class PostForm(forms.ModelForm):
             self.fields['tags_input'].initial = ', '.join(tag.name for tag in tags)
     
     def clean_tags_input(self):
+        """Clean and validate tags input"""
         tags_input = self.cleaned_data.get('tags_input', '')
+        
         if tags_input:
+            # Split by commas and clean
             tags = [tag.strip().lower() for tag in tags_input.split(',') if tag.strip()]
-            # Limit number of tags
+            
+            # Validate number of tags
             if len(tags) > 10:
                 raise ValidationError('Maximum 10 tags allowed.')
-            # Validate tag length
+            
+            # Validate each tag
             for tag in tags:
                 if len(tag) > 50:
                     raise ValidationError(f'Tag "{tag[:20]}..." is too long. Maximum 50 characters.')
+                if not tag.replace('-', '').replace('_', '').isalnum():
+                    raise ValidationError(f'Tag "{tag}" can only contain letters, numbers, hyphens, and underscores.')
+                if len(tag) < 2:
+                    raise ValidationError(f'Tag "{tag}" must be at least 2 characters long.')
+        
         return tags_input
     
+    def clean_title(self):
+        """Validate title"""
+        title = self.cleaned_data.get('title')
+        if len(title) < 5:
+            raise ValidationError('Title must be at least 5 characters long.')
+        return title
+    
+    def clean_content(self):
+        """Validate content"""
+        content = self.cleaned_data.get('content')
+        if len(content.strip()) < 50:
+            raise ValidationError('Content must be at least 50 characters long.')
+        return content
+    
     def save(self, commit=True, author=None):
+        """Save post with tags"""
         post = super().save(commit=False)
         
         if author:
@@ -135,16 +173,121 @@ class PostForm(forms.ModelForm):
         
         if commit:
             post.save()
+            
             # Save tags
             tags_input = self.cleaned_data.get('tags_input', '')
             if tags_input:
                 tags = [tag.strip().lower() for tag in tags_input.split(',') if tag.strip()]
+                # Clear existing tags and set new ones
                 post.tags.set(*tags)
             else:
                 post.tags.clear()
         
         return post
 
+class TagFilterForm(forms.Form):
+    """Form for filtering posts by tag"""
+    tag = forms.ModelChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        empty_label="All Tags",
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'onchange': 'this.form.submit()'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Order tags by name
+        self.fields['tag'].queryset = Tag.objects.all().order_by('name')
+
+class CommentForm(forms.ModelForm):
+    """Form for adding comments"""
+    class Meta:
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Write your comment here...',
+                'data-max-length': '1000'
+            })
+        }
+    
+    def clean_content(self):
+        content = self.cleaned_data.get('content')
+        if len(content.strip()) < 3:
+            raise ValidationError('Comment must be at least 3 characters long.')
+        if len(content) > 1000:
+            raise ValidationError('Comment must not exceed 1000 characters.')
+        return content.strip()
+
+class CommentEditForm(CommentForm):
+    """Form specifically for editing comments"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['content'].widget.attrs['placeholder'] = 'Edit your comment...'
+
+class SearchForm(forms.Form):
+    """Form for searching posts"""
+    query = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Search posts by title, content, or tags...',
+            'aria-label': 'Search'
+        }),
+        label=''
+    )
+    search_in = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ('title', 'Title'),
+            ('content', 'Content'),
+            ('tags', 'Tags'),
+        ],
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-check-input'
+        }),
+        initial=['title', 'content', 'tags']
+    )
+    
+    def clean_query(self):
+        query = self.cleaned_data.get('query', '').strip()
+        if len(query) < 2 and len(query) > 0:
+            raise ValidationError('Search query must be at least 2 characters long.')
+        return query
+
+class TagCreateForm(forms.Form):
+    """Form for creating new tags"""
+    name = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter tag name'
+        })
+    )
+    
+    def clean_name(self):
+        name = self.cleaned_data.get('name').strip().lower()
+        
+        # Check if tag already exists
+        if Tag.objects.filter(name__iexact=name).exists():
+            raise ValidationError('This tag already exists.')
+        
+        # Validate tag name
+        if not name.replace('-', '').replace('_', '').isalnum():
+            raise ValidationError('Tag can only contain letters, numbers, hyphens, and underscores.')
+        
+        if len(name) < 2:
+            raise ValidationError('Tag must be at least 2 characters long.')
+        
+        if len(name) > 50:
+            raise ValidationError('Tag must not exceed 50 characters.')
+        
+        return name
 class SearchForm(forms.Form):
     """Form for searching posts"""
     query = forms.CharField(
@@ -379,4 +522,5 @@ class PasswordChangeCustomForm(forms.Form):
         if password1 and password2 and password1 != password2:
             self.add_error('new_password2', 'Passwords do not match.')
             
+
         return cleaned_data
