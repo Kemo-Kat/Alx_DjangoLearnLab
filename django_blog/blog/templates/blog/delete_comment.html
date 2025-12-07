@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Comment - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0"><i class="fas fa-trash-alt me-2"></i>Delete Comment</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h4 class="text-danger">Are you sure you want to delete this comment?</h4>
+                </div>
+                
+                <!-- Comment Preview -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ comment.author.username }}</strong>
+                                <small class="text-muted ms-2">
+                                    {{ comment.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                        <p class="card-text">{{ comment.content|truncatechars:200 }}</p>
+                        <small class="text-muted">
+                            On post: <strong>{{ comment.post.title }}</strong>
+                        </small>
+                    </div>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This action cannot be undone. The comment will be permanently deleted.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'post_detail' comment.post.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Delete Comment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

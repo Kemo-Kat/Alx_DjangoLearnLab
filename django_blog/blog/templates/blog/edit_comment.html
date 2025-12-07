@@ -1,0 +1,81 @@
+
+
+{% extends 'base.html' %}
+
+{% block title %}Edit Comment - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Comment</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    You are editing your comment on: <strong>{{ post.title }}</strong>
+                </p>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">Comment</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text text-end" id="comment-counter">0/1000 characters</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'post_detail' post.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Update Comment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const commentTextarea = document.getElementById('id_content');
+    const commentCounter = document.getElementById('comment-counter');
+    
+    if (commentTextarea && commentCounter) {
+        commentTextarea.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            commentCounter.textContent = `${currentLength}/1000 characters`;
+            
+            if (currentLength > 1000) {
+                commentCounter.classList.add('text-danger');
+                this.classList.add('is-invalid');
+            } else {
+                commentCounter.classList.remove('text-danger');
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        // Initial count
+        commentTextarea.dispatchEvent(new Event('input'));
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+
+
+{% extends 'base.html' %}
+
+{% block title %}Tag Cloud - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0"><i class="fas fa-cloud me-2"></i>Tag Cloud</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead text-center mb-4">
+                    Browse posts by topics. Larger tags have more posts.
+                </p>
+                
+                <!-- Tag Cloud -->
+                <div class="tag-cloud text-center py-4">
+                    {% for tag in tags %}
+                        <a href="{% url 'posts_by_tag' tag.slug %}" 
+                           class="badge bg-secondary text-decoration-none mx-1 my-1"
+                           style="font-size: {{ tag.font_size }}; padding: 5px 10px;"
+                            {{ tag.name }} 
+                            <span>class="badge bg-light text-dark ms-1">
+                                {{ tag.num_posts }}
+                            </span>
+                        </a>
+                    {% empty %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No tags yet</h4>
+                            <p class="text-muted">Tags will appear when posts are tagged.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Tag Statistics -->
+                <div class="row mt-5">
+                    <div class="col-md-4 text-center">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h1 class="display-4 text-primary">{{ tags.count }}</h1>
+                                <p class="card-text">Total Tags</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h1 class="display-4 text-success">
+                                    {% if tags.first %}{{ tags.first.num_posts }}{% else %}0{% endif %}
+                                </h1>
+                                <p class="card-text">Most Popular Tag</p>
+                                {% if tags.first %}
+                                    <small class="text-muted">"{{ tags.first.name }}"</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h1 class="display-4 text-info">
+                                    {% if tags %}{{ total_posts_with_tags }}{% else %}0{% endif %}
+                                </h1>
+                                <p class="card-text">Total Tagged Posts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{% url 'home' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.tag-cloud {
+    line-height: 2.5;
+}
+.tag-cloud a:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s;
+    text-decoration: none;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,418 @@
+
+
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-edit me-2"></i>{{ title }}</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" novalidate id="post-form">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Title *</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Make it catchy and descriptive. Maximum 200 characters.
+                        </small>
+                    </div>
+                    
+                    <!-- Excerpt -->
+                    <div class="mb-3">
+                        <label for="{{ form.excerpt.id_for_label }}" class="form-label">Excerpt</label>
+                        {{ form.excerpt }}
+                        {% if form.excerpt.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.excerpt.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Brief summary of your post (max 500 characters). If left blank, it will be auto-generated from content.
+                        </small>
+                        <div id="excerpt-counter" class="form-text text-end">0/500 characters</div>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">Content *</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="format-bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="format-italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="format-link">
+                                <i class="fas fa-link"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="format-code">
+                                <i class="fas fa-code"></i>
+                            </button>
+                        </div>
+                        <small class="form-text text-muted">
+                            Write your post content here. You can use Markdown formatting.
+                        </small>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Image Upload -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">Featured Image</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.image.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if post and post.image %}
+                                <div class="mt-2">
+                                    <img src="{{ post.image.url }}" 
+                                         alt="Current image" 
+                                         class="img-thumbnail"
+                                         style="max-width: 200px;">
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Recommended size: 1200x630 pixels. Max file size: 5MB.
+                            </small>
+                        </div>
+                        
+                        <!-- Image Caption -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.image_caption.id_for_label }}" class="form-label">Image Caption</label>
+                            {{ form.image_caption }}
+                            {% if form.image_caption.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.image_caption.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Tags -->
+                    <div class="mb-3">
+                        <label for="{{ form.tags_input.id_for_label }}" class="form-label">Tags</label>
+                        {{ form.tags_input }}
+                        {% if form.tags_input.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.tags_input.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Separate tags with commas. Example: django, python, web-development
+                        </small>
+                        <div id="tags-preview" class="mt-2">
+                            {% if post %}
+                                {% for tag in post.tags.all %}
+                                    <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="mb-4">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.status.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Draft:</strong> Save privately | 
+                            <strong>Published:</strong> Make public | 
+                            <strong>Archived:</strong> Hide from public view
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% if post %}{% url 'post_detail' post.pk %}{% else %}{% url 'home' %}{% endif %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" name="action" value="save_draft" class="btn btn-outline-primary">
+                                <i class="fas fa-save me-1"></i>Save as Draft
+                            </button>
+                            <button type="submit" name="action" value="publish" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>{{ submit_text }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted">
+                <small>
+                    <i class="fas fa-lightbulb me-1"></i>
+                    Tip: Write a compelling introduction and use headings to structure your content.
+                </small>
+            </div>
+        </div>
+        
+        <!-- Preview Section -->
+        <div class="card shadow mt-4" id="preview-section" style="display: none;">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Live Preview</h5>
+            </div>
+            <div class="card-body" id="preview-content">
+                <!-- Preview will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    #post-content-editor {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 14px;
+    }
+    .post-preview {
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .post-preview img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock %}
+
+<!-- Tags Input -->
+<div class="mb-3">
+    <label for="id_tags_input" class="form-label">Tags</label>
+    {{ form.tags_input }}
+    {% if form.tags_input.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.tags_input.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    <small class="form-text text-muted">
+        Separate tags with commas. Example: django, python, web-development
+    </small>
+    <div id="tags-preview" class="mt-2">
+        {% if post %}
+            {% for tag in post.tags.all %}
+                <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('post-form');
+    const contentTextarea = document.getElementById('post-content-editor');
+    const excerptTextarea = document.getElementById('id_excerpt');
+    const tagsInput = document.getElementById('id_tags_input');
+    const tagsPreview = document.getElementById('tags-preview');
+    const previewSection = document.getElementById('preview-section');
+    const previewContent = document.getElementById('preview-content');
+    const excerptCounter = document.getElementById('excerpt-counter');
+    
+    // Character counter for excerpt
+    if (excerptTextarea && excerptCounter) {
+        excerptTextarea.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            excerptCounter.textContent = `${currentLength}/500 characters`;
+            
+            if (currentLength > 500) {
+                excerptCounter.classList.add('text-danger');
+                this.classList.add('is-invalid');
+            } else {
+                excerptCounter.classList.remove('text-danger');
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        // Initial count
+        excerptTextarea.dispatchEvent(new Event('input'));
+    }
+    
+    // Tags input with preview
+    if (tagsInput && tagsPreview) {
+        tagsInput.addEventListener('input', function() {
+            const tags = this.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            tagsPreview.innerHTML = '';
+            
+            tags.forEach(tag => {
+                if (tag) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-secondary me-1 mb-1';
+                    badge.textContent = tag;
+                    tagsPreview.appendChild(badge);
+                }
+            });
+        });
+        
+        // Initial preview if editing
+        if (tagsInput.value) {
+            tagsInput.dispatchEvent(new Event('input'));
+        }
+    }
+
+    // Text formatting buttons
+    const formatButtons = {
+        'format-bold': '**bold text**',
+        'format-italic': '*italic text*',
+        'format-link': '[link text](https://example.com)',
+        'format-code': '`code`'
+    };
+    
+    Object.keys(formatButtons).forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (button && contentTextarea) {
+            button.addEventListener('click', function() {
+                const format = formatButtons[buttonId];
+                insertAtCursor(contentTextarea, format);
+                contentTextarea.focus();
+            });
+        }
+    });
+    
+    // Live preview toggle
+    const previewToggle = document.createElement('button');
+    previewToggle.type = 'button';
+    previewToggle.className = 'btn btn-sm btn-outline-info mt-3';
+    previewToggle.innerHTML = '<i class="fas fa-eye me-1"></i>Toggle Preview';
+    previewToggle.addEventListener('click', function() {
+        if (previewSection.style.display === 'none') {
+            updatePreview();
+            previewSection.style.display = 'block';
+        } else {
+            previewSection.style.display = 'none';
+        }
+    });
+    
+    if (form) {
+        form.parentNode.insertBefore(previewToggle, form.nextSibling);
+    }
+    
+    // Update preview on content change
+    if (contentTextarea) {
+        contentTextarea.addEventListener('input', function() {
+            if (previewSection.style.display !== 'none') {
+                updatePreview();
+            }
+        });
+    }
+    
+    function insertAtCursor(textarea, text) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+        
+        if (selectedText) {
+            // Replace selected text
+            const newText = text.replace('text', selectedText);
+            textarea.value = textarea.value.substring(0, start) + newText + 
+                            textarea.value.substring(end);
+            textarea.selectionStart = start + newText.length;
+            textarea.selectionEnd = start + newText.length;
+        } else {
+            // Insert at cursor position
+            textarea.value = textarea.value.substring(0, start) + text + 
+                            textarea.value.substring(end);
+            textarea.selectionStart = start + text.length;
+            textarea.selectionEnd = start + text.length;
+        }
+    }
+    
+    function updatePreview() {
+        if (!contentTextarea || !previewContent) return;
+        
+        const content = contentTextarea.value;
+        
+        // Simple Markdown to HTML conversion for preview
+        let html = content
+            .replace(/^### (.*$)/gm, '<h4>$1</h4>')
+            .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        
+        previewContent.innerHTML = `<div class="post-preview"><p>${html}</p></div>`;
+    }
+    
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const title = document.getElementById('id_title').value.trim();
+            const content = contentTextarea.value.trim();
+            
+            if (!title) {
+                e.preventDefault();
+                alert('Please enter a title for your post.');
+                return;
+            }
+            
+            if (content.length < 50) {
+                e.preventDefault();
+                alert('Post content must be at least 50 characters long.');
+                return;
+            }
+            
+            // Disable submit button to prevent double submission
+            const submitButtons = this.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                button.disabled = true;
+                button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...`;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

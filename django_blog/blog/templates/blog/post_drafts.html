@@ -1,0 +1,88 @@
+
+
+{% extends 'base.html' %}
+
+{% block title %}My Drafts - Django Blog{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-warning text-dark">
+        <h3 class="mb-0"><i class="fas fa-file-alt me-2"></i>My Drafts</h3>
+    </div>
+    <div class="card-body">
+        {% if posts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Last Updated</th>
+                            <th>Word Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                            <tr>
+                                <td>
+                                    <strong>{{ post.title }}</strong>
+                                    {% if post.excerpt %}
+                                        <p class="text-muted small mb-0 mt-1">{{ post.excerpt|truncatechars:100 }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ post.updated_date|timesince }} ago</td>
+                                <td>{{ post.content|wordcount }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'post_edit' post.pk %}" 
+                                           class="btn btn-outline-primary"
+                                           title="Continue Editing">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{% url 'post_delete' post.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="btn btn-outline-danger"
+                                                    title="Delete Draft"
+                                                    onclick="return confirm('Delete this draft?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{% url 'post_edit' post.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="published">
+                                            <button type="submit" 
+                                                    class="btn btn-outline-success"
+                                                    title="Publish Now"
+                                                    onclick="return confirm('Publish this post?')">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Drafts Found</h4>
+                <p class="text-muted mb-4">You don't have any saved drafts.</p>
+                <a href="{% url 'post_create' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create New Post
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'post_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Create New Draft
+        </a>
+        <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Profile
+        </a>
+    </div>
+</div>
+{% endblock %}

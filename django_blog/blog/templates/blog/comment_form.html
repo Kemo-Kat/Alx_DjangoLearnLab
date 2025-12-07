@@ -1,0 +1,76 @@
+
+
+<!-- Add this to your post_detail.html where you want comments to appear -->
+<div class="comments-section mt-5">
+    <h3>Comments ({{ comments|length }})</h3>
+    
+    <!-- Comment Form for authenticated users -->
+    {% if user.is_authenticated %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Add a Comment</h5>
+            <form method="POST" action="{% url 'add_comment' post.pk %}">
+                {% csrf_token %}
+                {{ comment_form.content }}
+                <div class="form-text text-end" id="comment-counter">0/1000 characters</div>
+                <button type="submit" class="btn btn-primary mt-3">
+                    <i class="fas fa-paper-plane me-2"></i>Post Comment
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p class="mb-0">
+            Please <a href="{% url 'login' %}?next={{ request.path }}" class="alert-link">login</a> 
+            to leave a comment.
+        </p>
+    </div>
+    {% endif %}
+    
+    <!-- Comments List -->
+    <div class="comments-list">
+        {% for comment in comments %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <strong>{{ comment.author.username }}</strong>
+                        <small class="text-muted ms-2">
+                            {{ comment.created_at|timesince }} ago
+                            {% if comment.created_at != comment.updated_at %}
+                                • edited
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    {% if user == comment.author or user.is_staff %}
+                    <div class="btn-group btn-group-sm">
+                        {% if user == comment.author %}
+                        <a href="{% url 'edit_comment' comment.pk %}" 
+                           class="btn btn-outline-secondary btn-sm"
+                           title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'delete_comment' comment.pk %}" 
+                           class="btn btn-outline-danger btn-sm"
+                           title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <p class="card-text">{{ comment.content|linebreaks }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-4">
+            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No comments yet. Be the first to comment!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,64 @@
+
+
+<div class="comment mb-4 {% if comment.is_reply %}ms-4 border-start ps-3{% endif %}" id="comment-{{ comment.pk }}">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex align-items-center">
+            {% if comment.author.profile.profile_picture %}
+                <img src="{{ comment.author.profile.profile_picture.url }}" 
+                     alt="{{ comment.author.username }}" 
+                     class="rounded-circle me-2"
+                     style="width: 32px; height: 32px; object-fit: cover;">
+            {% else %}
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2"
+                     style="width: 32px; height: 32px;">
+                    <span class="text-white small">{{ comment.author.username|first|upper }}</span>
+                </div>
+            {% endif %}
+            <div>
+                <strong class="d-block">
+                    <a href="{% url 'user_posts' comment.author.username %}" class="text-decoration-none">
+                        {{ comment.author.get_full_name|default:comment.author.username }}
+                    </a>
+                </strong>
+                <small class="text-muted">
+                    {{ comment.created_date|timesince }} ago
+                    {% if comment.updated_date != comment.created_date %}
+                        • edited
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        
+        <!-- Comment Actions -->
+        {% if user.is_authenticated %}
+            <div class="btn-group btn-group-sm">
+                <button type="button" 
+                        class="btn btn-outline-secondary btn-sm reply-btn"
+                        data-comment-id="{{ comment.pk }}"
+                        data-author="{{ comment.author.username }}">
+                    <i class="fas fa-reply"></i>
+                </button>
+                
+                {% if user == comment.author or user == comment.post.author or user.is_staff %}
+                    <form method="POST" action="{% url 'delete_comment' comment.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Are you sure you want to delete this comment?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="comment-content mb-2">
+        {{ comment.content|linebreaks }}
+    </div>
+    
+    <!-- Replies -->
+    {% for reply in comment.get_replies %}
+        {% include 'blog/comment_item.html' with comment=reply %}
+    {% endfor %}
+</div>
