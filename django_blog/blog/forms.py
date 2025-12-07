@@ -58,6 +58,28 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Enter password'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm password'})
 
+class TagWidget(forms.TextInput):
+    """Custom widget for tag input with autocomplete"""
+    template_name = 'widgets/tag_widget.html'
+    
+    def __init__(self, attrs=None):
+        default_attrs = {'class': 'tag-input form-control'}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs)
+    
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        # Get existing tags for autocomplete
+        context['existing_tags'] = Tag.objects.all().values_list('name', flat=True)
+        return context
+
+class Media:
+    css = {
+        'all': ['css/tagwidget.css']
+    }
+    js = ['js/tagwidget.js']
+
 class CustomAuthenticationForm(AuthenticationForm):
     """Custom login form with Bootstrap classes"""
     username = forms.CharField(
@@ -524,3 +546,4 @@ class PasswordChangeCustomForm(forms.Form):
             
 
         return cleaned_data
+
