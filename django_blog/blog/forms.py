@@ -34,7 +34,7 @@ class CustomUserCreationForm(UserCreationForm):
             'placeholder': 'Last name (optional)'
         })
     )
-
+TagWidget()
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
@@ -546,4 +546,5 @@ class PasswordChangeCustomForm(forms.Form):
             
 
         return cleaned_data
+
 
