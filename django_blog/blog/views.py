@@ -548,4 +548,109 @@ def delete_account_view(request):
         else:
             messages.error(request, 'Incorrect password. Account deletion failed.')
     
+
     return render(request, 'blog/delete_account.html')
+
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    """Create a new comment on a post"""
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html'
+    
+    def form_valid(self, form):
+        # Get the post from URL parameter
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(Post, pk=post_id)
+        
+        # Set the comment author and post
+        form.instance.author = self.request.user
+        form.instance.post = post
+        
+        # Save the comment
+        response = super().form_valid(form)
+        
+        # Add success message
+        messages.success(self.request, 'Your comment has been added successfully!')
+        
+        return response
+    
+    def get_success_url(self):
+        # Redirect back to the post detail page
+        post_id = self.kwargs.get('post_id')
+        return reverse_lazy('post_detail', kwargs={'pk': post_id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        post_id = self.kwargs.get('post_id')
+        context['post'] = get_object_or_404(Post, pk=post_id)
+        return context
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Update an existing comment"""
+    model = Comment
+    form_class = CommentEditForm
+    template_name = 'blog/comment_edit.html'
+    context_object_name = 'comment'
+    
+    def test_func(self):
+        """Only comment author can update"""
+        comment = self.get_object()
+        return self.request.user == comment.author
+    
+    def handle_no_permission(self):
+        """Handle unauthorized access"""
+        comment = self.get_object()
+        messages.error(self.request, "You don't have permission to edit this comment.")
+        return redirect('post_detail', pk=comment.post.pk)
+    
+    def form_valid(self, form):
+        # Mark that the comment has been edited
+        form.instance.is_edited = True
+        
+        # Save and show success message
+        response = super().form_valid(form)
+        messages.success(self.request, 'Comment updated successfully!')
+        
+        return response
+    
+    def get_success_url(self):
+        # Redirect back to the post
+        return reverse_lazy('post_detail', kwargs={'pk': self.object.post.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['post'] = self.object.post
+        return context
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """Delete a comment"""
+    model = Comment
+    template_name = 'blog/comment_confirm_delete.html'
+    context_object_name = 'comment'
+    
+    def test_func(self):
+        """Only comment author or post author can delete"""
+        comment = self.get_object()
+        return (self.request.user == comment.author or 
+                self.request.user == comment.post.author or
+                self.request.user.is_staff)
+    
+    def handle_no_permission(self):
+        """Handle unauthorized access"""
+        comment = self.get_object()
+        messages.error(self.request, "You don't have permission to delete this comment.")
+        return redirect('post_detail', pk=comment.post.pk)
+    
+    def delete(self, request, *args, **kwargs):
+        """Override delete to add success message"""
+        messages.success(request, 'Comment deleted successfully!')
+        return super().delete(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        # Redirect back to the post
+        return reverse_lazy('post_detail', kwargs={'pk': self.object.post.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['post'] = self.object.post
+        return context
