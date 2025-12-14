@@ -11,6 +11,29 @@ from notifications.models import Notification
 from rest_framework import generics
 
 # Create your views here.
+
+class LikeView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        
+        # Check if already liked
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        
+        if not created:
+            return Response({'error': 'You already liked this post'}, status=400)
+        
+        # Create notification if user likes someone else's post
+        if post.author != request.user:
+            Notification.objects.create(
+                recipient=post.author,
+                actor=request.user,
+                verb="liked your post",
+                target_post=post
+            )
+        
+        return Response({'message': 'Post liked successfully'})
 class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.author == request.user
@@ -162,3 +185,4 @@ class LikeView(generics.GenericAPIView):
             )
         
         return Response({'message': 'Post liked successfully'})
+
