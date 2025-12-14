@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-vz-^kj@ffr=fz+2@mm0i#%80fiu^a%rw$2*v2gnzba+@-!*xzh'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG =False
+DEBUG = False
 
 ALLOWED_HOSTS = [['your-domain.com', 'localhost', '127.0.0.1'] ]
 
@@ -168,4 +168,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # CORS settings (if you have a frontend)
 CORS_ALLOWED_ORIGINS = [
     "https://your-frontend-domain.com",
+
 ]
