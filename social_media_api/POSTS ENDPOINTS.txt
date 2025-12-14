@@ -1,0 +1,31 @@
+POSTS ENDPOINTS:
+
+1. Posts
+- GET /posts/posts/ - List all posts (paginated)
+- POST /posts/posts/ - Create a post
+  Body: {"title": "Post title", "content": "Post content"}
+  
+- GET /posts/posts/{id}/ - Get specific post
+- PUT /posts/posts/{id}/ - Update post (owner only)
+- DELETE /posts/posts/{id}/ - Delete post (owner only)
+
+2. Comments
+- GET /posts/posts/{post_id}/comments/ - List comments for a post
+- POST /posts/posts/{post_id}/comments/ - Add comment to post
+  Body: {"content": "Comment text"}
+
+- GET /posts/posts/{post_id}/comments/{id}/ - Get specific comment
+- PUT /posts/posts/{post_id}/comments/{id}/ - Update comment (owner only)
+- DELETE /posts/posts/{post_id}/comments/{id}/ - Delete comment (owner only)
+
+AUTHENTICATION:
+All endpoints require token authentication:
+Header: Authorization: Token YOUR_TOKEN
+
+PERMISSIONS:
+- Users can only edit/delete their own posts and comments
+- Anyone can view posts and comments
+- Only authenticated users can create posts/comments
+
+SEARCH:
+Use ?search=keyword to search posts by title or content

@@ -1,0 +1,12 @@
+
+GET    /posts/posts/          - List all posts (with pagination)
+POST   /posts/posts/          - Create new post
+GET    /posts/posts/1/        - Get post details
+PUT    /posts/posts/1/        - Update post (owner only)
+DELETE /posts/posts/1/        - Delete post (owner only)
+
+GET    /posts/posts/1/comments/  - List comments for post
+POST   /posts/posts/1/comments/  - Add comment to post
+GET    /posts/posts/1/comments/2/  - Get comment details
+PUT    /posts/posts/1/comments/2/  - Update comment (owner only)
+DELETE /posts/posts/1/comments/2/  - Delete comment (owner only)
