@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Like
 from notifications.models import Notification
-
+from rest_framework import generics
 
 # Create your views here.
 class IsOwner(permissions.BasePermission):
@@ -139,3 +139,26 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
         serializer.save(author=self.request.user, post_id=post_id)
+
+class LikeView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        
+        # Check if already liked
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        
+        if not created:
+            return Response({'error': 'You already liked this post'}, status=400)
+        
+        # Create notification if user likes someone else's post
+        if post.author != request.user:
+            Notification.objects.create(
+                recipient=post.author,
+                actor=request.user,
+                verb="liked your post",
+                target_post=post
+            )
+        
+        return Response({'message': 'Post liked successfully'})
