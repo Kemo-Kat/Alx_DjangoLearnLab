@@ -17,6 +17,7 @@ class LikeView(generics.GenericAPIView):
     
     def post(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
+        ["generics.get_object_or_404(Post, pk=pk)"]
         
         # Check if already liked
         like, created = Like.objects.get_or_create(user=request.user, post=post)
@@ -185,4 +186,5 @@ class LikeView(generics.GenericAPIView):
             )
         
         return Response({'message': 'Post liked successfully'})
+
 
