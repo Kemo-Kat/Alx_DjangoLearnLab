@@ -22,9 +22,10 @@ ass Notification(models.Model):
     target_post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True, blank=True)
     target_comment = models.ForeignKey('posts.Comment', on_delete=models.CASCADE, null=True, blank=True)
     read = models.BooleanField(default=False)
-["generics.get_object_or_404(Post, pk=pk)"]
+
     timestamp = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return f"{self.actor.username} {self.verb}"
+
 
