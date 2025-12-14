@@ -107,4 +107,35 @@ class UnlikeView(generics.GenericAPIView):
             like.delete()
             return Response({'message': 'Post unliked successfully'})
         except Like.DoesNotExist:
+
             return Response({'error': 'You have not liked this post'}, status=400)
+
+class IsOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.author == request.user
+
+class PostViewSet(viewsets.ModelViewSet):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['title', 'content']
+    
+    def get_queryset(self):
+        return Post.objects.all().order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
+    
+    def get_queryset(self):
+        post_id = self.kwargs.get('post_id')
+        if post_id:
+            return Comment.objects.filter(post_id=post_id).order_by('created_at')
+        return Comment.objects.all().order_by('created_at')
+    
+    def perform_create(self, serializer):
+        post_id = self.kwargs.get('post_id')
+        serializer.save(author=self.request.user, post_id=post_id)
